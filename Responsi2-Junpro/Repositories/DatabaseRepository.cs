@@ -1,350 +1,292 @@
 using Npgsql;
 using Responsi2_Junpro.Models;
-using _514719_Rhizal_ResponsiJunpro.Data;
+using _Responsi2_Junpro.Repositories;
 
 namespace Responsi2_Junpro.Repositories
 {
-    /// <summary>
-    /// Implementasi IDatabaseRepository untuk PostgreSQL
-    /// Menggunakan Npgsql untuk koneksi database
-    /// </summary>
     public class DatabaseRepository : IDatabaseRepository
     {
-        #region CREATE
-
+        // INSERT developer baru
         public bool Insert(Developer developer)
         {
-            if (!developer.IsValid())
-                return false;
+            if (!developer.IsValid()) return false;
 
             developer.HitungSkorDanGaji();
 
+            // Cek budget dulu
+            if (!ValidateBudget(developer.NamaProyek, developer.TotalGaji))
+            {
+                MessageBox.Show($"Budget proyek tidak cukup untuk gaji Rp {developer.TotalGaji:N0}", 
+                    "Budget Tidak Cukup", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return false;
+            }
+
             try
             {
-                using (var conn = DatabaseConnection.GetConnection())
-                {
-                    conn.Open();
-                    // Ambil id_proyek berdasarkan nama_proyek
-                    string getProyekQuery = "SELECT id_proyek FROM proyek WHERE nama_proyek = @namaProyek";
-                    int idProyek = 0;
-                    using (var cmdProyek = new NpgsqlCommand(getProyekQuery, conn))
-                    {
-                        cmdProyek.Parameters.AddWithValue("@namaProyek", developer.NamaProyek);
-                        var result = cmdProyek.ExecuteScalar();
-                        if (result != null)
-                            idProyek = Convert.ToInt32(result);
-                    }
+                using var conn = DatabaseConnection.GetConnection();
+                conn.Open();
+                
+                string query = "SELECT insert_developer(@nama, @status, @fitur, @bug, @proyek)";
+                using var cmd = new NpgsqlCommand(query, conn);
+                cmd.Parameters.AddWithValue("@nama", developer.NamaDeveloper);
+                cmd.Parameters.AddWithValue("@status", developer.StatusKontrak);
+                cmd.Parameters.AddWithValue("@fitur", developer.FiturSelesai);
+                cmd.Parameters.AddWithValue("@bug", developer.JumlahBug);
+                cmd.Parameters.AddWithValue("@proyek", developer.NamaProyek);
 
-                    if (idProyek == 0)
-                    {
-                        MessageBox.Show("Proyek tidak ditemukan!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        return false;
-                    }
-
-                    string query = @"INSERT INTO developer 
-                                    (nama_dev, status_kontrak, fitur_selesai, jumlah_bug, id_proyek) 
-                                    VALUES (@nama, @status, @fitur, @bug, @idProyek)";
-
-                    using (var cmd = new NpgsqlCommand(query, conn))
-                    {
-                        cmd.Parameters.AddWithValue("@nama", developer.NamaDeveloper);
-                        cmd.Parameters.AddWithValue("@status", developer.StatusKontrak);
-                        cmd.Parameters.AddWithValue("@fitur", developer.FiturSelesai);
-                        cmd.Parameters.AddWithValue("@bug", developer.JumlahBug);
-                        cmd.Parameters.AddWithValue("@idProyek", idProyek);
-
-                        return cmd.ExecuteNonQuery() > 0;
-                    }
-                }
+                var result = cmd.ExecuteScalar();
+                return result != null && Convert.ToInt32(result) > 0;
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error saat insert data: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Error insert: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return false;
             }
         }
 
-        #endregion
-
-        #region READ
-
+        // GET semua developer
         public List<Developer> GetAll()
         {
-            var developers = new List<Developer>();
+            var list = new List<Developer>();
 
             try
             {
-                using (var conn = DatabaseConnection.GetConnection())
-                {
-                    conn.Open();
-                    string query = @"SELECT d.id_dev, d.nama_dev, p.nama_proyek, d.status_kontrak, d.fitur_selesai, d.jumlah_bug 
-                                    FROM developer d 
-                                    JOIN proyek p ON d.id_proyek = p.id_proyek 
-                                    ORDER BY d.id_dev";
+                using var conn = DatabaseConnection.GetConnection();
+                conn.Open();
+                
+                string query = "SELECT * FROM get_all_developers()";
+                using var cmd = new NpgsqlCommand(query, conn);
+                using var reader = cmd.ExecuteReader();
 
-                    using (var cmd = new NpgsqlCommand(query, conn))
-                    using (var reader = cmd.ExecuteReader())
+                while (reader.Read())
+                {
+                    var dev = new Developer
                     {
-                        while (reader.Read())
-                        {
-                            var dev = new Developer
-                            {
-                                Id = reader.GetInt32(0),
-                                NamaDeveloper = reader.GetString(1),
-                                NamaProyek = reader.GetString(2),
-                                StatusKontrak = reader.GetString(3),
-                                FiturSelesai = reader.GetInt32(4),
-                                JumlahBug = reader.GetInt32(5)
-                            };
-                            dev.HitungSkorDanGaji();
-                            developers.Add(dev);
-                        }
-                    }
+                        Id = reader.GetInt32(0),
+                        NamaDeveloper = reader.GetString(1),
+                        NamaProyek = reader.GetString(2),
+                        StatusKontrak = reader.GetString(3),
+                        FiturSelesai = reader.GetInt32(4),
+                        JumlahBug = reader.GetInt32(5)
+                    };
+                    dev.HitungSkorDanGaji();
+                    list.Add(dev);
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error saat mengambil data: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Error get data: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
 
-            return developers;
+            return list;
         }
 
+        // GET developer by id
         public Developer? GetById(int id)
         {
             try
             {
-                using (var conn = DatabaseConnection.GetConnection())
+                using var conn = DatabaseConnection.GetConnection();
+                conn.Open();
+                
+                string query = "SELECT * FROM get_developer_by_id(@id)";
+                using var cmd = new NpgsqlCommand(query, conn);
+                cmd.Parameters.AddWithValue("@id", id);
+
+                using var reader = cmd.ExecuteReader();
+                if (reader.Read())
                 {
-                    conn.Open();
-                    string query = @"SELECT d.id_dev, d.nama_dev, p.nama_proyek, d.status_kontrak, d.fitur_selesai, d.jumlah_bug 
-                                    FROM developer d 
-                                    JOIN proyek p ON d.id_proyek = p.id_proyek 
-                                    WHERE d.id_dev = @id";
-
-                    using (var cmd = new NpgsqlCommand(query, conn))
+                    var dev = new Developer
                     {
-                        cmd.Parameters.AddWithValue("@id", id);
-
-                        using (var reader = cmd.ExecuteReader())
-                        {
-                            if (reader.Read())
-                            {
-                                var dev = new Developer
-                                {
-                                    Id = reader.GetInt32(0),
-                                    NamaDeveloper = reader.GetString(1),
-                                    NamaProyek = reader.GetString(2),
-                                    StatusKontrak = reader.GetString(3),
-                                    FiturSelesai = reader.GetInt32(4),
-                                    JumlahBug = reader.GetInt32(5)
-                                };
-                                dev.HitungSkorDanGaji();
-                                return dev;
-                            }
-                        }
-                    }
+                        Id = reader.GetInt32(0),
+                        NamaDeveloper = reader.GetString(1),
+                        NamaProyek = reader.GetString(2),
+                        StatusKontrak = reader.GetString(3),
+                        FiturSelesai = reader.GetInt32(4),
+                        JumlahBug = reader.GetInt32(5)
+                    };
+                    dev.HitungSkorDanGaji();
+                    return dev;
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error saat mengambil data: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Error get data: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
-
             return null;
         }
 
-        public Developer? GetByNama(string namaDeveloper)
-        {
-            try
-            {
-                using (var conn = DatabaseConnection.GetConnection())
-                {
-                    conn.Open();
-                    string query = @"SELECT d.id_dev, d.nama_dev, p.nama_proyek, d.status_kontrak, d.fitur_selesai, d.jumlah_bug 
-                                    FROM developer d 
-                                    JOIN proyek p ON d.id_proyek = p.id_proyek 
-                                    WHERE d.nama_dev = @nama";
-
-                    using (var cmd = new NpgsqlCommand(query, conn))
-                    {
-                        cmd.Parameters.AddWithValue("@nama", namaDeveloper);
-
-                        using (var reader = cmd.ExecuteReader())
-                        {
-                            if (reader.Read())
-                            {
-                                var dev = new Developer
-                                {
-                                    Id = reader.GetInt32(0),
-                                    NamaDeveloper = reader.GetString(1),
-                                    NamaProyek = reader.GetString(2),
-                                    StatusKontrak = reader.GetString(3),
-                                    FiturSelesai = reader.GetInt32(4),
-                                    JumlahBug = reader.GetInt32(5)
-                                };
-                                dev.HitungSkorDanGaji();
-                                return dev;
-                            }
-                        }
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show($"Error saat mengambil data: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
-
-            return null;
-        }
-
+        // GET semua proyek
         public List<Proyek> GetAllProyek()
         {
-            var proyekList = new List<Proyek>();
+            var list = new List<Proyek>();
 
             try
             {
-                using (var conn = DatabaseConnection.GetConnection())
-                {
-                    conn.Open();
-                    string query = "SELECT id_proyek, nama_proyek FROM proyek ORDER BY nama_proyek";
+                using var conn = DatabaseConnection.GetConnection();
+                conn.Open();
+                
+                string query = "SELECT * FROM get_all_proyek()";
+                using var cmd = new NpgsqlCommand(query, conn);
+                using var reader = cmd.ExecuteReader();
 
-                    using (var cmd = new NpgsqlCommand(query, conn))
-                    using (var reader = cmd.ExecuteReader())
-                    {
-                        while (reader.Read())
-                        {
-                            proyekList.Add(new Proyek(reader.GetInt32(0), reader.GetString(1)));
-                        }
-                    }
+                while (reader.Read())
+                {
+                    list.Add(new Proyek(
+                        reader.GetInt32(0), 
+                        reader.GetString(1),
+                        reader.GetDecimal(2)
+                    ));
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error saat mengambil data proyek: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Error get proyek: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
 
-            return proyekList;
+            return list;
         }
 
-        #endregion
-
-        #region UPDATE
-
+        // UPDATE developer
         public bool Update(Developer developer)
         {
-            if (!developer.IsValid() || developer.Id <= 0)
-                return false;
+            if (!developer.IsValid() || developer.Id <= 0) return false;
 
             developer.HitungSkorDanGaji();
 
+            if (!ValidateBudget(developer.NamaProyek, developer.TotalGaji, developer.Id))
+            {
+                MessageBox.Show($"Budget proyek tidak cukup untuk gaji Rp {developer.TotalGaji:N0}", 
+                    "Budget Tidak Cukup", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return false;
+            }
+
             try
             {
-                using (var conn = DatabaseConnection.GetConnection())
-                {
-                    conn.Open();
-                    
-                    // Ambil id_proyek berdasarkan nama_proyek
-                    string getProyekQuery = "SELECT id_proyek FROM proyek WHERE nama_proyek = @namaProyek";
-                    int idProyek = 0;
-                    using (var cmdProyek = new NpgsqlCommand(getProyekQuery, conn))
-                    {
-                        cmdProyek.Parameters.AddWithValue("@namaProyek", developer.NamaProyek);
-                        var result = cmdProyek.ExecuteScalar();
-                        if (result != null)
-                            idProyek = Convert.ToInt32(result);
-                    }
+                using var conn = DatabaseConnection.GetConnection();
+                conn.Open();
+                
+                string query = "SELECT update_developer(@id, @nama, @status, @fitur, @bug, @proyek)";
+                using var cmd = new NpgsqlCommand(query, conn);
+                cmd.Parameters.AddWithValue("@id", developer.Id);
+                cmd.Parameters.AddWithValue("@nama", developer.NamaDeveloper);
+                cmd.Parameters.AddWithValue("@status", developer.StatusKontrak);
+                cmd.Parameters.AddWithValue("@fitur", developer.FiturSelesai);
+                cmd.Parameters.AddWithValue("@bug", developer.JumlahBug);
+                cmd.Parameters.AddWithValue("@proyek", developer.NamaProyek);
 
-                    if (idProyek == 0)
-                    {
-                        MessageBox.Show("Proyek tidak ditemukan!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                        return false;
-                    }
-
-                    string query = @"UPDATE developer SET 
-                                    nama_dev = @nama, 
-                                    status_kontrak = @status, 
-                                    fitur_selesai = @fitur, 
-                                    jumlah_bug = @bug, 
-                                    id_proyek = @idProyek 
-                                    WHERE id_dev = @id";
-
-                    using (var cmd = new NpgsqlCommand(query, conn))
-                    {
-                        cmd.Parameters.AddWithValue("@id", developer.Id);
-                        cmd.Parameters.AddWithValue("@nama", developer.NamaDeveloper);
-                        cmd.Parameters.AddWithValue("@status", developer.StatusKontrak);
-                        cmd.Parameters.AddWithValue("@fitur", developer.FiturSelesai);
-                        cmd.Parameters.AddWithValue("@bug", developer.JumlahBug);
-                        cmd.Parameters.AddWithValue("@idProyek", idProyek);
-
-                        return cmd.ExecuteNonQuery() > 0;
-                    }
-                }
+                var result = cmd.ExecuteScalar();
+                return result != null && Convert.ToBoolean(result);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error saat update data: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Error update: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return false;
             }
         }
 
-        #endregion
-
-        #region DELETE
-
+        // DELETE developer
         public bool Delete(int id)
         {
-            if (id <= 0)
-                return false;
+            if (id <= 0) return false;
 
             try
             {
-                using (var conn = DatabaseConnection.GetConnection())
-                {
-                    conn.Open();
-                    string query = "DELETE FROM developer WHERE id_dev = @id";
+                using var conn = DatabaseConnection.GetConnection();
+                conn.Open();
+                
+                string query = "SELECT delete_developer(@id)";
+                using var cmd = new NpgsqlCommand(query, conn);
+                cmd.Parameters.AddWithValue("@id", id);
 
-                    using (var cmd = new NpgsqlCommand(query, conn))
-                    {
-                        cmd.Parameters.AddWithValue("@id", id);
-                        return cmd.ExecuteNonQuery() > 0;
-                    }
-                }
+                var result = cmd.ExecuteScalar();
+                return result != null && Convert.ToBoolean(result);
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error saat hapus data: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show($"Error delete: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return false;
             }
         }
 
-        public bool DeleteByNama(string namaDeveloper)
+        // Ambil budget proyek
+        public decimal GetBudgetProyek(string namaProyek)
         {
-            if (string.IsNullOrEmpty(namaDeveloper))
-                return false;
+            try
+            {
+                using var conn = DatabaseConnection.GetConnection();
+                conn.Open();
+                
+                string query = "SELECT get_budget_proyek(@nama)";
+                using var cmd = new NpgsqlCommand(query, conn);
+                cmd.Parameters.AddWithValue("@nama", namaProyek);
+
+                var result = cmd.ExecuteScalar();
+                return result != null ? Convert.ToDecimal(result) : 0;
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show($"Error get budget: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return 0;
+            }
+        }
+
+        // Hitung total pengeluaran proyek
+        public decimal GetTotalPengeluaranProyek(string namaProyek, int? excludeDevId = null)
+        {
+            decimal total = 0;
 
             try
             {
-                using (var conn = DatabaseConnection.GetConnection())
-                {
-                    conn.Open();
-                    string query = "DELETE FROM developer WHERE nama_dev = @nama";
+                using var conn = DatabaseConnection.GetConnection();
+                conn.Open();
+                
+                string query = "SELECT * FROM get_total_pengeluaran_proyek(@nama)";
+                using var cmd = new NpgsqlCommand(query, conn);
+                cmd.Parameters.AddWithValue("@nama", namaProyek);
 
-                    using (var cmd = new NpgsqlCommand(query, conn))
-                    {
-                        cmd.Parameters.AddWithValue("@nama", namaDeveloper);
-                        return cmd.ExecuteNonQuery() > 0;
-                    }
+                using var reader = cmd.ExecuteReader();
+                while (reader.Read())
+                {
+                    string status = reader.GetString(1);
+                    int fitur = reader.GetInt32(2);
+                    int bug = reader.GetInt32(3);
+
+                    // Hitung skor dan gaji pakai class polymorphism
+                    var skorCalc = SkorFactory.Create(status, fitur, bug);
+                    double skor = skorCalc.HitungSkor();
+
+                    var gajiCalc = TotalGajiFactory.Create(status, fitur, skor);
+                    total += gajiCalc.HitungGaji();
                 }
             }
             catch (Exception ex)
             {
-                MessageBox.Show($"Error saat hapus data: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return false;
+                MessageBox.Show($"Error hitung pengeluaran: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+
+            // Exclude dev tertentu kalo lagi update
+            if (excludeDevId.HasValue)
+            {
+                var dev = GetById(excludeDevId.Value);
+                if (dev != null && dev.NamaProyek == namaProyek)
+                    total -= dev.TotalGaji;
+            }
+
+            return total;
         }
 
-        #endregion
+        public decimal GetTotalPengeluaranProyek(string namaProyek)
+        {
+            return GetTotalPengeluaranProyek(namaProyek, null);
+        }
+
+        // Validasi budget cukup atau tidak
+        public bool ValidateBudget(string namaProyek, decimal gajiBaru, int? excludeDevId = null)
+        {
+            decimal budget = GetBudgetProyek(namaProyek);
+            decimal totalPengeluaran = GetTotalPengeluaranProyek(namaProyek, excludeDevId);
+            return (budget - totalPengeluaran) >= gajiBaru;
+        }
     }
 }

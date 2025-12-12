@@ -236,11 +236,11 @@
   "project": {
     "version": "1.0.0",
     "restore": {
-      "projectUniqueName": "c:\\Users\\rhizal\\Praktikum\\Responsi2\\Responsi2-Junpro\\Responsi2-Junpro\\Responsi2-Junpro.csproj",
+      "projectUniqueName": "C:\\Users\\rhizal\\Praktikum\\Responsi2\\Responsi2-Junpro\\Responsi2-Junpro\\Responsi2-Junpro.csproj",
       "projectName": "Responsi2-Junpro",
-      "projectPath": "c:\\Users\\rhizal\\Praktikum\\Responsi2\\Responsi2-Junpro\\Responsi2-Junpro\\Responsi2-Junpro.csproj",
+      "projectPath": "C:\\Users\\rhizal\\Praktikum\\Responsi2\\Responsi2-Junpro\\Responsi2-Junpro\\Responsi2-Junpro.csproj",
       "packagesPath": "C:\\Users\\rhizal\\.nuget\\packages\\",
-      "outputPath": "c:\\Users\\rhizal\\Praktikum\\Responsi2\\Responsi2-Junpro\\Responsi2-Junpro\\obj\\",
+      "outputPath": "C:\\Users\\rhizal\\Praktikum\\Responsi2\\Responsi2-Junpro\\Responsi2-Junpro\\obj\\",
       "projectStyle": "PackageReference",
       "configFilePaths": [
         "C:\\Users\\rhizal\\AppData\\Roaming\\NuGet\\NuGet.Config",

@@ -1,10 +1,5 @@
--- ==========================================================
--- SQL FUNCTIONS UNTUK APLIKASI MANAJEMEN DEVELOPER
--- ==========================================================
 
--- ==========================================================
 -- 1. FUNCTION: GET ALL DEVELOPERS DENGAN JOIN PROYEK
--- ==========================================================
 CREATE OR REPLACE FUNCTION get_all_developers()
 RETURNS TABLE(
     id_dev INT,
@@ -29,9 +24,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- ==========================================================
 -- 2. FUNCTION: GET DEVELOPER BY ID
--- ==========================================================
 CREATE OR REPLACE FUNCTION get_developer_by_id(p_id_dev INT)
 RETURNS TABLE(
     id_dev INT,
@@ -56,9 +49,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- ==========================================================
 -- 3. FUNCTION: GET ALL PROYEK
--- ==========================================================
 CREATE OR REPLACE FUNCTION get_all_proyek()
 RETURNS TABLE(
     id_proyek INT,
@@ -73,9 +64,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- ==========================================================
 -- 4. FUNCTION: GET ID PROYEK BY NAMA
--- ==========================================================
 CREATE OR REPLACE FUNCTION get_id_proyek_by_nama(p_nama_proyek VARCHAR(100))
 RETURNS INT AS $$
 DECLARE
@@ -89,9 +78,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- ==========================================================
 -- 5. FUNCTION: GET BUDGET PROYEK
--- ==========================================================
 CREATE OR REPLACE FUNCTION get_budget_proyek(p_nama_proyek VARCHAR(100))
 RETURNS NUMERIC(15, 2) AS $$
 DECLARE
@@ -105,10 +92,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- ==========================================================
 -- 6. FUNCTION: GET TOTAL GAJI PROYEK (Sum semua gaji developer dalam proyek)
--- Catatan: Gaji dihitung di aplikasi, function ini menghitung estimasi
--- ==========================================================
 CREATE OR REPLACE FUNCTION get_total_pengeluaran_proyek(p_nama_proyek VARCHAR(100))
 RETURNS TABLE(
     nama_dev VARCHAR(50),
@@ -129,9 +113,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- ==========================================================
 -- 7. FUNCTION: INSERT DEVELOPER
--- ==========================================================
 CREATE OR REPLACE FUNCTION insert_developer(
     p_nama_dev VARCHAR(50),
     p_status_kontrak VARCHAR(20),
@@ -162,9 +144,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- ==========================================================
 -- 8. FUNCTION: UPDATE DEVELOPER
--- ==========================================================
 CREATE OR REPLACE FUNCTION update_developer(
     p_id_dev INT,
     p_nama_dev VARCHAR(50),
@@ -202,9 +182,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- ==========================================================
 -- 9. FUNCTION: DELETE DEVELOPER
--- ==========================================================
 CREATE OR REPLACE FUNCTION delete_developer(p_id_dev INT)
 RETURNS BOOLEAN AS $$
 DECLARE
@@ -218,10 +196,7 @@ BEGIN
 END;
 $$ LANGUAGE plpgsql;
 
--- ==========================================================
 -- 10. FUNCTION: CEK BUDGET TERSEDIA
--- Menghitung apakah budget proyek masih cukup
--- ==========================================================
 CREATE OR REPLACE FUNCTION cek_budget_tersedia(p_nama_proyek VARCHAR(100))
 RETURNS NUMERIC(15, 2) AS $$
 DECLARE

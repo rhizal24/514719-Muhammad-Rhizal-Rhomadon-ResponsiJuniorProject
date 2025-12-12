@@ -21,3 +21,4 @@ C:\Users\rhizal\Praktikum\Responsi2\Responsi2-Junpro\Responsi2-Junpro\obj\Debug\
 C:\Users\rhizal\Praktikum\Responsi2\Responsi2-Junpro\Responsi2-Junpro\obj\Debug\net8.0-windows\Responsi2-Junpro.pdb
 C:\Users\rhizal\Praktikum\Responsi2\Responsi2-Junpro\Responsi2-Junpro\obj\Debug\net8.0-windows\Responsi2-Junpro.genruntimeconfig.cache
 C:\Users\rhizal\Praktikum\Responsi2\Responsi2-Junpro\Responsi2-Junpro\obj\Debug\net8.0-windows\ref\Responsi2-Junpro.dll
+c:\Users\rhizal\Praktikum\Responsi2\Responsi2-Junpro\Responsi2-Junpro\obj\Debug\net8.0-windows\Responsi2-Junpro.sourcelink.json

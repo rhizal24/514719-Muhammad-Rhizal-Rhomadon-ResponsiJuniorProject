@@ -17,6 +17,3 @@ build_property.RootNamespace = Responsi2_Junpro
 build_property.ProjectDir = C:\Users\rhizal\Praktikum\Responsi2\Responsi2-Junpro\Responsi2-Junpro\
 build_property.EnableComHosting = 
 build_property.EnableGeneratedComInterfaceComImportInterop = 
-build_property.CsWinRTUseWindowsUIXamlProjections = false
-build_property.EffectiveAnalysisLevelStyle = 8.0
-build_property.EnableCodeStyleSeverity = 

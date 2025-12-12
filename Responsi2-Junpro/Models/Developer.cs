@@ -1,13 +1,9 @@
 namespace Responsi2_Junpro.Models
 {
-    /// <summary>
-    /// INHERITANCE: Developer mewarisi dari BaseModel
-    /// ENCAPSULATION: Semua field private dengan getter/setter
-    /// Menggunakan Skor dan TotalGaji class untuk perhitungan (Abstraction, Polymorphism)
-    /// </summary>
+    // Developer mewarisi dari BaseModel (Inheritance)
     public class Developer : BaseModel
     {
-        // ENCAPSULATION: Private fields
+        // Private fields (Encapsulation)
         private string _namaDeveloper = string.Empty;
         private string _namaProyek = string.Empty;
         private string _statusKontrak = string.Empty;
@@ -16,7 +12,7 @@ namespace Responsi2_Junpro.Models
         private double _skorTotal;
         private decimal _totalGaji;
 
-        // ENCAPSULATION: Public properties dengan validasi
+        // Properties
         public string NamaDeveloper
         {
             get { return _namaDeveloper; }
@@ -59,50 +55,29 @@ namespace Responsi2_Junpro.Models
             private set { _totalGaji = value; }
         }
 
-        // Constructor default
-        public Developer()
-        {
-            _namaDeveloper = string.Empty;
-            _namaProyek = string.Empty;
-            _statusKontrak = string.Empty;
-            _fiturSelesai = 0;
-            _jumlahBug = 0;
-            _skorTotal = 0;
-            _totalGaji = 0;
-        }
+        public Developer() { }
 
-        // Constructor dengan parameter
-        public Developer(string namaDeveloper, string namaProyek, string statusKontrak, int fiturSelesai, int jumlahBug)
+        public Developer(string nama, string proyek, string status, int fitur, int bug)
         {
-            NamaDeveloper = namaDeveloper;
-            NamaProyek = namaProyek;
-            StatusKontrak = statusKontrak;
-            FiturSelesai = fiturSelesai;
-            JumlahBug = jumlahBug;
+            NamaDeveloper = nama;
+            NamaProyek = proyek;
+            StatusKontrak = status;
+            FiturSelesai = fitur;
+            JumlahBug = bug;
             HitungSkorDanGaji();
         }
 
-        /// <summary>
-        /// Menghitung skor dan gaji menggunakan class Skor dan TotalGaji
-        /// POLYMORPHISM: Menggunakan factory pattern untuk membuat instance yang sesuai
-        /// berdasarkan status kontrak (Full Time atau Freelance)
-        /// </summary>
+        // Hitung skor dan gaji menggunakan class Skor dan TotalGaji (Polymorphism)
         public void HitungSkorDanGaji()
         {
-            // POLYMORPHISM: Menggunakan SkorFactory untuk membuat instance Skor yang sesuai
-            // Full Time: Skor = 10 × Fitur - 5 × Bug
-            // Freelance: Skor = 100 × (1 - ((2×Bug)/(3×Fitur)))
-            Skor skorCalculator = SkorFactory.Create(StatusKontrak, FiturSelesai, JumlahBug);
-            _skorTotal = skorCalculator.HitungSkor();
+            // Pakai factory untuk buat calculator sesuai status kontrak
+            Skor skorCalc = SkorFactory.Create(StatusKontrak, FiturSelesai, JumlahBug);
+            _skorTotal = skorCalc.HitungSkor();
 
-            // POLYMORPHISM: Menggunakan TotalGajiFactory untuk membuat instance TotalGaji yang sesuai
-            // Full Time: Gaji Pokok (5jt) + Skor × 20ribu
-            // Freelance: Berdasarkan skor (>=80: 500rb, >=50: 400rb, <50: 350rb) × Fitur
-            TotalGaji gajiCalculator = TotalGajiFactory.Create(StatusKontrak, FiturSelesai, _skorTotal);
-            _totalGaji = gajiCalculator.HitungGaji();
+            TotalGaji gajiCalc = TotalGajiFactory.Create(StatusKontrak, FiturSelesai, _skorTotal);
+            _totalGaji = gajiCalc.HitungGaji();
         }
 
-        // INHERITANCE: Override method abstract dari BaseModel
         public override bool IsValid()
         {
             return !string.IsNullOrWhiteSpace(NamaDeveloper) &&

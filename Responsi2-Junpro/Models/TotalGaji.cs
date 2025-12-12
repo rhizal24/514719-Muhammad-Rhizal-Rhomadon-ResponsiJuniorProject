@@ -1,140 +1,61 @@
 namespace Responsi2_Junpro.Models
 {
-    /// <summary>
-    /// ABSTRACTION: Abstract class untuk perhitungan Total Gaji
-    /// Menyembunyikan detail implementasi perhitungan gaji
-    /// </summary>
+    // Abstract class untuk hitung gaji (Abstraction)
     public abstract class TotalGaji
     {
-        // ENCAPSULATION: Protected fields untuk diakses child class
-        protected int _fiturSelesai;
-        protected double _skor;
-        protected decimal _gajiPokok;
-        protected decimal _nilaiGaji;
+        protected int Fitur;
+        protected double Skor;
 
-        // Properties
-        public int FiturSelesai
+        public TotalGaji(int fitur, double skor)
         {
-            get { return _fiturSelesai; }
-            set { _fiturSelesai = value >= 0 ? value : 0; }
-        }
-
-        public double Skor
-        {
-            get { return _skor; }
-            set { _skor = value >= 0 ? value : 0; }
-        }
-
-        public decimal GajiPokok
-        {
-            get { return _gajiPokok; }
-            protected set { _gajiPokok = value; }
-        }
-
-        public decimal NilaiGaji
-        {
-            get { return _nilaiGaji; }
-            protected set { _nilaiGaji = value; }
-        }
-
-        // Constructor
-        protected TotalGaji(int fiturSelesai, double skor)
-        {
-            FiturSelesai = fiturSelesai;
+            Fitur = fitur;
             Skor = skor;
         }
 
-        /// <summary>
-        /// ABSTRACTION: Method abstract untuk menghitung total gaji
-        /// Implementasi berbeda di setiap child class (Polymorphism)
-        /// </summary>
         public abstract decimal HitungGaji();
     }
 
-    /// <summary>
-    /// INHERITANCE: TotalGajiFullTime mewarisi dari TotalGaji
-    /// POLYMORPHISM: Override method HitungGaji() dengan rumus Full Time
-    /// Rumus: Total Gaji = Gaji Pokok (5jt) + Skor × 20ribu
-    /// </summary>
+    // Child class untuk Full Time (Polymorphism)
     public class TotalGajiFullTime : TotalGaji
     {
-        private const decimal GAJI_POKOK_FULLTIME = 5000000m;
-        private const decimal BONUS_PER_SKOR = 20000m;
+        public TotalGajiFullTime(int fitur, double skor) : base(fitur, skor) { }
 
-        public TotalGajiFullTime(int fiturSelesai, double skor) : base(fiturSelesai, skor)
-        {
-            GajiPokok = GAJI_POKOK_FULLTIME;
-        }
-
-        /// <summary>
-        /// POLYMORPHISM: Implementasi perhitungan gaji untuk Full Time
-        /// Rumus: Total Gaji = Gaji Pokok (5jt) + Skor × 20ribu
-        /// </summary>
         public override decimal HitungGaji()
         {
-            decimal bonus = (decimal)Skor * BONUS_PER_SKOR;
-            NilaiGaji = GajiPokok + bonus;
-            return NilaiGaji;
+            // Rumus: Gaji Pokok (5jt) + Skor x 20ribu
+            return 5000000 + (decimal)(Skor * 20000);
         }
     }
 
-    /// <summary>
-    /// INHERITANCE: TotalGajiFreelance mewarisi dari TotalGaji
-    /// POLYMORPHISM: Override method HitungGaji() dengan rumus Freelance
-    /// Tidak ada gaji pokok, berdasarkan skor dan fitur
-    /// </summary>
+    // Child class untuk Freelance (Polymorphism)
     public class TotalGajiFreelance : TotalGaji
     {
-        private const decimal TARIF_SKOR_TINGGI = 500000m;   // Skor >= 80
-        private const decimal TARIF_SKOR_SEDANG = 400000m;   // 50 <= Skor < 80
-        private const decimal TARIF_SKOR_RENDAH = 350000m;   // Skor < 50
+        public TotalGajiFreelance(int fitur, double skor) : base(fitur, skor) { }
 
-        public TotalGajiFreelance(int fiturSelesai, double skor) : base(fiturSelesai, skor)
-        {
-            GajiPokok = 0m; // Freelance tidak punya gaji pokok
-        }
-
-        /// <summary>
-        /// POLYMORPHISM: Implementasi perhitungan gaji untuk Freelance
-        /// - Skor >= 80: 500ribu × Fitur
-        /// - 50 <= Skor < 80: 400ribu × Fitur
-        /// - Skor < 50: 350ribu × Fitur
-        /// </summary>
         public override decimal HitungGaji()
         {
-            decimal tarifPerFitur;
-
+            // Tarif berdasarkan skor
+            decimal tarif;
             if (Skor >= 80)
-            {
-                tarifPerFitur = TARIF_SKOR_TINGGI;
-            }
+                tarif = 500000;
             else if (Skor >= 50)
-            {
-                tarifPerFitur = TARIF_SKOR_SEDANG;
-            }
+                tarif = 400000;
             else
-            {
-                tarifPerFitur = TARIF_SKOR_RENDAH;
-            }
+                tarif = 350000;
 
-            NilaiGaji = tarifPerFitur * FiturSelesai;
-            return NilaiGaji;
+            return tarif * Fitur;
         }
     }
 
-    /// <summary>
-    /// Factory class untuk membuat instance TotalGaji berdasarkan status kontrak
-    /// </summary>
+    // Factory untuk create instance sesuai status
     public static class TotalGajiFactory
     {
-        public static TotalGaji Create(string statusKontrak, int fiturSelesai, double skor)
+        public static TotalGaji Create(string status, int fitur, double skor)
         {
-            return statusKontrak switch
-            {
-                "Full Time" => new TotalGajiFullTime(fiturSelesai, skor),
-                "Freelance" => new TotalGajiFreelance(fiturSelesai, skor),
-                _ => new TotalGajiFullTime(fiturSelesai, skor) // Default Full Time
-            };
+            if (status == "Full Time")
+                return new TotalGajiFullTime(fitur, skor);
+            else
+                return new TotalGajiFreelance(fitur, skor);
         }
     }
 }

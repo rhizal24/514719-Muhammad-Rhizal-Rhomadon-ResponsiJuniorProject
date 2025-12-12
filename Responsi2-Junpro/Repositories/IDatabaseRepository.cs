@@ -21,5 +21,10 @@ namespace Responsi2_Junpro.Repositories
 
         // DELETE
         bool Delete(int id);
+
+        // BUDGET VALIDATION
+        decimal GetBudgetProyek(string namaProyek);
+        decimal GetTotalPengeluaranProyek(string namaProyek);
+        bool ValidateBudget(string namaProyek, decimal gajiBaruDeveloper, int? excludeDevId = null);
     }
 }

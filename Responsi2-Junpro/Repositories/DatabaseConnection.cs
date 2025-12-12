@@ -1,6 +1,6 @@
 using Npgsql;
 
-namespace _514719_Rhizal_ResponsiJunpro.Data
+namespace _Responsi2_Junpro.Repositories
 {
     public class DatabaseConnection
     {
