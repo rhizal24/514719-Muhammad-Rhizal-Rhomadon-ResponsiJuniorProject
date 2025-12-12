@@ -6,11 +6,6 @@
 
 ---
 
-## 📋 Worksheet
-Worksheet untuk repositori ini dapat diakses [di sini]()
-
----
-
 ## Tampilan dan Fungsi Aplikasi
 
 ### 1. Interface Aplikasi di Visual Studio (Design View)
