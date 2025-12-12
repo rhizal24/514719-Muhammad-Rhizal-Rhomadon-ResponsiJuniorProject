@@ -146,8 +146,6 @@ public abstract class Skor
 
 Semua operasi database menggunakan SQL Functions yang sudah dibuat di PostgreSQL.
 
-**Lokasi:** `sql_functions.sql`
-
 | Function | Deskripsi |
 |----------|-----------|
 | `get_all_developers()` | Mengambil semua developer dengan JOIN proyek |
